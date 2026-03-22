@@ -1,36 +1,28 @@
 import streamlit as st
-import streamlit.components.v1 as components # <-- NOVO IMPORT
 import pandas as pd
-import csv
 import io
+import base64
+import csv
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Gestor de Contatos", 
     page_icon="📇", 
-    layout="centered",
-    # initial_sidebar_state="expanded" 
+    layout="centered"
 )
 
-# --- FUNÇÃO PARA FECHAR A SIDEBAR VIA JAVASCRIPT ---
-def fechar_sidebar():
-    components.html(
-        """
-        <script>
-            const buttons = window.parent.document.querySelectorAll('button');
-            buttons.forEach(btn => {
-                // Procura o botão de recolher a sidebar pela tag do Streamlit
-                if (btn.getAttribute('data-testid') === 'baseButton-headerNoPadding' || 
-                    btn.getAttribute('data-testid') === 'stSidebarCollapseButton' ||
-                    btn.getAttribute('aria-label') === 'Collapse sidebar') {
-                    btn.click();
-                }
-            });
-        </script>
-        """,
-        height=0,
-        width=0
-    )
+# --- BOTÃO DE DOWNLOAD CUSTOMIZADO HTML ---
+def botao_download_customizado(label, data, file_name, mime_type, cor_fundo, cor_texto="white"):
+    b64 = base64.b64encode(data).decode()
+    html = f'''
+    <a href="data:{mime_type};base64,{b64}" download="{file_name}" 
+       style="display: block; width: 100%; background-color: {cor_fundo}; color: {cor_texto}; text-align: center; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-family: sans-serif; font-size: 1rem; border: 1px solid rgba(0,0,0,0.1); margin-bottom: 10px; box-sizing: border-box; transition: opacity 0.2s;"
+       onMouseOver="this.style.opacity='0.8'"
+       onMouseOut="this.style.opacity='1'">
+       {label}
+    </a>
+    '''
+    st.markdown(html, unsafe_allow_html=True)
 
 # --- FUNÇÕES DE CONVERSÃO NA MEMÓRIA ---
 def gerar_vcf(df):
@@ -71,30 +63,35 @@ def gerar_txt_emails(df):
 def injetar_css():
     st.markdown("""
         <style>
-        [data-testid="stSidebar"] {
-            min-width: 240px !important;
-            max-width: 240px !important;
+        [data-testid="collapsedControl"] {display: none !important;}
+        [data-testid="stSidebar"] {display: none !important;}
+
+        div[data-testid="stHorizontalBlock"] div.stButton button {
+            border-color: transparent !important;
+            background-color: transparent !important;
+            border-radius: 0px !important;
+            border-bottom: 2px solid transparent !important;
+            padding-bottom: 5px !important;
+            margin-right: 20px !important;
+        }
+        div[data-testid="stHorizontalBlock"] div.stButton button[kind="secondaryFormSubmit"] {
+            border-bottom: 2px solid var(--primary-color) !important;
+            color: var(--primary-color) !important;
+        }
+        div[data-testid="stHorizontalBlock"] div.stButton button:hover {
+            color: var(--primary-color) !important;
         }
 
         .footer {
-            position: fixed !important; 
-            left: 0 !important; 
-            bottom: 0 !important; 
-            width: 100% !important;
+            position: fixed !important; left: 0 !important; bottom: 0 !important; width: 100% !important;
             background-color: var(--secondary-background-color, #0e1117) !important;
-            color: #aaaaaa !important; 
-            text-align: center !important;
-            padding: 10px !important; 
-            font-size: 14px !important; 
-            border-top: 1px solid rgba(255, 255, 255, 0.1) !important; 
-            z-index: 999999 !important; 
-            opacity: 1 !important;
+            color: #aaaaaa !important; text-align: center !important; padding: 10px !important; 
+            font-size: 14px !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; 
+            z-index: 999999 !important; opacity: 1 !important;
         }
-        
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         </style>
-
         <div class="footer">Desenvolvido por <b>Alessandro</b> | 2026</div>
     """, unsafe_allow_html=True)
 
@@ -102,214 +99,155 @@ def injetar_css():
 def main():
     injetar_css() 
 
-    # --- INICIALIZAÇÃO DA MEMÓRIA ---
-    if "arquivo_bytes" not in st.session_state:
-        st.session_state.arquivo_bytes = None
-    if "nome_arquivo" not in st.session_state:
-        st.session_state.nome_arquivo = ""
-    if "uploader_key" not in st.session_state:
-        st.session_state.uploader_key = 0 
-    if "df_atual" not in st.session_state:
-        st.session_state.df_atual = None
-    
-    # Controle de estado para detectar mudança no menu
-    if "menu_anterior" not in st.session_state:
-        st.session_state.menu_anterior = "🔄 Conversor de Arquivos"
+    if "arquivo_bytes" not in st.session_state: st.session_state.arquivo_bytes = None
+    if "nome_arquivo" not in st.session_state: st.session_state.nome_arquivo = ""
+    if "uploader_key" not in st.session_state: st.session_state.uploader_key = 0 
+    if "df_atual" not in st.session_state: st.session_state.df_atual = None
 
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=100)
-    st.sidebar.markdown("## Navegação")
-    
-    # Adicionamos a nova opção de Análise no Menu
-    menu = st.sidebar.radio("Ir para:", ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"])
-    
-    # Lógica que fecha a sidebar quando o menu muda
-    if menu != st.session_state.menu_anterior:
-        st.session_state.menu_anterior = menu
-        fechar_sidebar()
-        
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("<p style='text-align: justify;'>Ferramenta administrativa para converter e analisar dados de planilhas.</p>", unsafe_allow_html=True)
+    col_img, col_txt = st.columns([1, 6])
+    with col_img:
+        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=70)
+    with col_txt:
+        st.markdown("### Admin Data Tools Analytics")
+        st.markdown("Ferramenta para converter e analisar dados de planilhas.")
 
-    # ==========================================
-    # PÁGINA 1: CONVERSOR
-    # ==========================================
+    st.write("") 
+    opcoes_menu = ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"]
+    menu = st.radio("Navegação:", opcoes_menu, horizontal=True, label_visibility="collapsed")
+    st.markdown("---")
+
     if menu == "🔄 Conversor de Arquivos":
-        st.markdown("### 📇 Admin Data Tools Analytics")
         st.markdown("Faça o upload da sua planilha para gerar os arquivos compatíveis.")
-        
-        arquivo_carregado = st.file_uploader(
-            "Arraste seu arquivo CSV ou Excel aqui:", 
-            type=["csv", "xlsx", "xls"],
-            key=f"uploader_{st.session_state.uploader_key}"
-        )
+        arquivo_carregado = st.file_uploader("Arraste seu arquivo CSV ou Excel aqui:", type=["csv", "xlsx", "xls"], key=f"uploader_{st.session_state.uploader_key}")
 
         if arquivo_carregado is not None:
             st.session_state.arquivo_bytes = arquivo_carregado.getvalue()
             st.session_state.nome_arquivo = arquivo_carregado.name
 
         if st.session_state.arquivo_bytes is not None:
-            st.success(f"Arquivo **{st.session_state.nome_arquivo}** carregado com sucesso!")
-            
-            if st.button("🗑️ Limpar Arquivo e Enviar Outro"):
+            if st.button("🗑️ Limpar Arquivo"):
                 st.session_state.arquivo_bytes = None
                 st.session_state.nome_arquivo = ""
                 st.session_state.df_atual = None
                 st.session_state.uploader_key += 1 
                 st.rerun() 
-            st.markdown("---")
 
             extensao = st.session_state.nome_arquivo.split('.')[-1].lower()
             df = None
 
             try:
                 if extensao == 'csv':
-                    with st.expander("⚙️ Configurações do CSV", expanded=True):
-                        separador = st.selectbox("Qual é o separador das colunas?", [",", ";", "|", "\t"])
+                    # Decodifica o texto para ser analisado
                     try:
                         conteudo_texto = st.session_state.arquivo_bytes.decode("utf-8")
                     except UnicodeDecodeError:
                         conteudo_texto = st.session_state.arquivo_bytes.decode("latin-1")
-                    df = pd.read_csv(io.StringIO(conteudo_texto), sep=separador, dtype=str)
+                    
+                    # Usa o farejador automático (Sniffer) para descobrir o separador usando as primeiras 2048 letras
+                    separador_adivinhado = csv.Sniffer().sniff(conteudo_texto[:2048]).delimiter
+                    
+                    df = pd.read_csv(io.StringIO(conteudo_texto), sep=separador_adivinhado, dtype=str)
                 
                 elif extensao in ['xlsx', 'xls']:
                     df = pd.read_excel(io.BytesIO(st.session_state.arquivo_bytes), dtype=str)
                 
                 if df is not None:
-                    # 1. Padroniza tudo para letras minúsculas e remove espaços
                     df.columns = [str(col).strip().lower() for col in df.columns]
-                    
-                    # 2. Dicionário tradutor (De: Para)
                     dicionario_colunas = {
                         "nome completo": "nome", "cliente": "nome", "nome do cliente": "nome",
                         "nome fantasia": "nome", "razao social": "nome", "razão social": "nome",
                         "primeiro nome": "nome", "name": "nome", "first name": "nome", "nombre": "nome", 
-                        
                         "contato": "telefone", "celular": "telefone", "cel": "telefone",
                         "whatsapp": "telefone", "whats": "telefone", "zap": "telefone",
                         "tel": "telefone", "fone": "telefone", "telefone 1": "telefone",
                         "celular 1": "telefone", "telefone de contato": "telefone", "numero": "telefone",
                         "número": "telefone", "phone": "telefone", "mobile": "telefone",
-                        
                         "e-mail": "email", "e mail": "email", "mail": "email",
                         "endereço de email": "email", "endereço de e-mail": "email",
                         "email address": "email", "correio eletronico": "email",
                         "correio eletrônico": "email", "correo": "email"
                     }
-                    
-                    # 3. Renomeia as colunas usando o dicionário
                     df = df.rename(columns=dicionario_colunas)
-
-                    # Salva a tabela pronta na memória para a tela de Gráficos usar
                     st.session_state.df_atual = df
 
             except Exception as e:
-                st.error(f"❌ Erro ao ler a planilha. Detalhe: {e}")
+                st.error(f"❌ Erro ao ler a planilha. Tente abrir o arquivo e salvá-lo novamente como CSV. Detalhe: {e}")
 
             if df is not None:
-                st.markdown("### 📥 Escolha o formato de saída:")
-                
+                st.markdown("#### 📥 Escolha o formato de saída:")
                 nome_base = st.session_state.nome_arquivo.rsplit('.', 1)[0]
 
                 try:
                     col1, col2 = st.columns(2)
+                    
                     with col1:
                         bytes_vcf = gerar_vcf(df)
-                        st.download_button("📱 Contatos (VCF)", data=bytes_vcf, file_name=f"{nome_base}.vcf", mime="text/vcard", use_container_width=True, type="primary")
+                        botao_download_customizado("📱 Contatos (VCF)", bytes_vcf, f"{nome_base}.vcf", "text/vcard", "#00D1FF", "black")
+                    
                     with col2:
                         bytes_xlsx = gerar_excel_xlsx(df)
-                        st.download_button("📊 Excel (.xlsx)", data=bytes_xlsx, file_name=f"{nome_base}_convertido.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, type="secondary")
+                        botao_download_customizado("📊 Excel (.xlsx)", bytes_xlsx, f"{nome_base}_convertido.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "#4CAF50")
 
                     col3, col4 = st.columns(2)
+                    
                     with col3:
                         bytes_csv = gerar_csv(df)
-                        st.download_button("📑 Arquivo CSV", data=bytes_csv, file_name=f"{nome_base}_convertido.csv", mime="text/csv", use_container_width=True, type="secondary")
+                        botao_download_customizado("📑 Arquivo CSV", bytes_csv, f"{nome_base}_convertido.csv", "text/csv", "#FF9800")
+                    
                     with col4:
                         bytes_emails = gerar_txt_emails(df)
-                        st.download_button("📧 E-mails (.txt)", data=bytes_emails, file_name=f"{nome_base}_emails.txt", mime="text/plain", use_container_width=True, type="secondary")
+                        botao_download_customizado("📧 E-mails (.txt)", bytes_emails, f"{nome_base}_emails.txt", "text/plain", "#AF47FF")
                         
                 except Exception as e:
                     st.error(f"❌ Erro ao processar os arquivos finais. Detalhe: {e}")
 
-    # ==========================================
-    # PÁGINA 2: ANÁLISE DE DADOS
-    # ==========================================
     elif menu == "📊 Análise de Dados":
-        st.markdown("### 📊 Análise de Dados e Gráficos")
-        
-        # Verifica se o usuário já carregou uma planilha na primeira aba
         if st.session_state.df_atual is None:
             st.warning("⚠️ Nenhuma planilha carregada! Por favor, vá em 'Conversor de Arquivos' e faça o upload primeiro.")
         else:
             df = st.session_state.df_atual.copy()
-            
-            # --- SEÇÃO 0: PRÉ-VISUALIZAÇÃO ---
             st.markdown("### 👁️ Pré-visualização dos Dados")
             st.dataframe(df, use_container_width=True, height=200)
-            
             st.markdown("---")
-            
-            # --- SEÇÃO 1: MÉTRICAS GERAIS ---
             st.markdown("### 🎯 Resumo da Base de Contatos")
             col1, col2, col3 = st.columns(3)
-            
             total_linhas = len(df)
             col1.metric("Total de Contatos", total_linhas)
-            
-            # Calcula quantos têm telefone e e-mail (se as colunas existirem)
             qtd_telefone = df['telefone'].dropna().replace("", pd.NA).count() if 'telefone' in df.columns else 0
             qtd_email = df['email'].dropna().replace("", pd.NA).count() if 'email' in df.columns else 0
-            
             col2.metric("Com Telefone", f"{qtd_telefone} ({(qtd_telefone/total_linhas)*100:.1f}%)" if total_linhas > 0 else "0")
             col3.metric("Com E-mail", f"{qtd_email} ({(qtd_email/total_linhas)*100:.1f}%)" if total_linhas > 0 else "0")
-
             st.markdown("---")
-
-            # --- SEÇÃO 2: GRÁFICO DE PROVEDORES DE E-MAIL ---
             st.markdown("### 📧 Provedores de E-mail mais usados")
             if 'email' in df.columns and qtd_email > 0:
                 dominios = df['email'].dropna().astype(str).apply(lambda x: x.split('@')[-1] if '@' in x else None)
-                top_dominios = dominios.value_counts().head(10) # Pega os 10 maiores
-                
+                top_dominios = dominios.value_counts().head(10)
                 st.bar_chart(top_dominios)
             else:
                 st.info("A coluna 'email' não foi encontrada ou está vazia.")
-
             st.markdown("---")
-
-            # --- SEÇÃO 3: ANÁLISE DINÂMICA (GRÁFICO LIVRE) ---
             st.markdown("### 📈 Análise Dinâmica")
             st.write("Escolha qualquer coluna da sua planilha para visualizar a distribuição dos dados:")
-            
             coluna_escolhida = st.selectbox("Selecione a coluna:", df.columns)
-            
             if coluna_escolhida:
                 dados_limpos = df[coluna_escolhida].replace("", pd.NA).dropna()
-                
                 if len(dados_limpos) == 0:
                     st.warning("Esta coluna está vazia.")
                 elif len(dados_limpos.unique()) > 50:
                     st.warning("Existem muitos valores diferentes nesta coluna (ex: nomes próprios). O gráfico ficaria ilegível.")
                 else:
-                    contagem = dados_limpos.value_counts().head(15) # Top 15
+                    contagem = dados_limpos.value_counts().head(15)
                     st.bar_chart(contagem)
 
-    # ==========================================
-    # PÁGINA 3: SOBRE
-    # ==========================================
     elif menu == "ℹ️ Sobre o Sistema":
-        st.markdown("### ℹ️ Sobre")
         st.markdown("""
-        Bem-vindo ao **Admin Data Tools Analytics**!
-        
-        Este sistema foi criado para facilitar a vida de quem precisa gerenciar grandes listas de contatos.
+        Este sistema foi criado para facilitar a vida de quem precisa gerenciar dados de planilhas.
         
         **Como funciona:**
         1. Envie um arquivo `.csv`, `.xlsx` ou `.xls` com as colunas `nome`, `telefone` e `email`.
         2. O sistema lê os dados de forma segura na memória.
         3. O conversor possibilita escolher o formato para baixar (VCF, XLSX, CSV ou TXT).
         4. Acesse a aba **Análise de Dados** para extrair insights da sua lista.
-        
-        ---
         """)
 
 if __name__ == "__main__":
