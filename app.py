@@ -60,7 +60,7 @@ def injetar_css():
             text-align: center;
             padding: 10px; 
             font-size: 14px; 
-            #border-top: 1px solid #eaeaea; 
+            border-top: 1px solid #eaeaea; 
             z-index: 100;
         }
         /* Para o modo escuro do Streamlit, você pode trocar 'white' por '#0e1117' e a cor do texto para '#aaaaaa' */
@@ -92,7 +92,7 @@ def main():
     menu = st.sidebar.radio("Ir para:", ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"])
     
     st.sidebar.markdown("---")
-    st.sidebar.markdown("Ferramenta para converter planilhas de contatos e analisar dados.")
+    st.sidebar.markdown("Ferramenta administrativa para converter e analisar dados de planilhas.")
 
     # ==========================================
     # PÁGINA 1: CONVERSOR
@@ -102,7 +102,7 @@ def main():
         st.markdown("Faça o upload da sua planilha para gerar os arquivos compatíveis.")
         
         arquivo_carregado = st.file_uploader(
-            "Arraste seu arquivo CSV ou Excel aqui", 
+            "Arraste seu arquivo CSV ou Excel aqui:", 
             type=["csv", "xlsx", "xls"],
             key=f"uploader_{st.session_state.uploader_key}"
         )
@@ -120,7 +120,6 @@ def main():
                 st.session_state.df_atual = None # Limpa a tabela da memória também
                 st.session_state.uploader_key += 1 
                 st.rerun() 
-            
             st.markdown("---")
 
             extensao = st.session_state.nome_arquivo.split('.')[-1].lower()
@@ -224,7 +223,7 @@ def main():
     # PÁGINA 2: ANÁLISE DE DADOS
     # ==========================================
     elif menu == "📊 Análise de Dados":
-        st.title("📊 Análise de Dados e Gráficos")
+        st.markdown("## 📊 Análise de Dados e Gráficos")
         
         # Verifica se o usuário já carregou uma planilha na primeira aba
         if st.session_state.df_atual is None:
@@ -292,7 +291,7 @@ def main():
     # PÁGINA 3: SOBRE
     # ==========================================
     elif menu == "ℹ️ Sobre o Sistema":
-        st.title("ℹ️ Sobre")
+        st.markdown("## ℹ️ Sobre")
         st.markdown("""
         Bem-vindo ao **Admin Data Tools Analytics**!
         
@@ -306,7 +305,6 @@ def main():
 
         
         ---
-        **Desenvolvido por:** Alessandro
         """)
 
 if __name__ == "__main__":
