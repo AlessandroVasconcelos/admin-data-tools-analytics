@@ -4,7 +4,12 @@ import csv
 import io
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Gestor de Contatos", page_icon="📇", layout="centered")
+st.set_page_config(
+    page_title="Gestor de Contatos", 
+    page_icon="📇", 
+    layout="centered",
+    initial_sidebar_state="expanded" 
+)
 
 # --- FUNÇÕES DE CONVERSÃO NA MEMÓRIA ---
 def gerar_vcf(df):
@@ -46,14 +51,24 @@ def injetar_css():
     st.markdown("""
         <style>
         .footer {
-            position: fixed; left: 0; bottom: 0; width: 100%;
-            background-color: transparent; color: #888888; text-align: center;
-            padding: 10px; font-size: 14px; border-top: 1px solid #eaeaea; z-index: 100;
+            position: fixed; 
+            left: 0; 
+            bottom: 0; 
+            width: 100%;
+            background-color: transparent; /* Fundo branco para não ficar transparente */
+            color: #555555; 
+            text-align: center;
+            padding: 10px; 
+            font-size: 14px; 
+            #border-top: 1px solid #eaeaea; 
+            z-index: 100;
         }
+        /* Para o modo escuro do Streamlit, você pode trocar 'white' por '#0e1117' e a cor do texto para '#aaaaaa' */
+        
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         </style>
-        <div class="footer">Desenvolvido por <b>Alessandro Vasconcelos</b> | 2026</div>
+        <div class="footer">Desenvolvido por <b>Alessandro</b> | 2026</div>
     """, unsafe_allow_html=True)
 
 # --- MENU E INTERFACE PRINCIPAL ---
@@ -72,7 +87,7 @@ def main():
         st.session_state.df_atual = None
 
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=100)
-    st.sidebar.title("Navegação")
+    st.sidebar.markdown("## Navegação")
     # Adicionamos a nova opção de Análise no Menu
     menu = st.sidebar.radio("Ir para:", ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"])
     
@@ -83,7 +98,7 @@ def main():
     # PÁGINA 1: CONVERSOR
     # ==========================================
     if menu == "🔄 Conversor de Arquivos":
-        st.title("📇 Conversor de Contatos")
+        st.markdown("## 📇 Admin Data Tools Analytics")
         st.markdown("Faça o upload da sua planilha para gerar os arquivos compatíveis.")
         
         arquivo_carregado = st.file_uploader(
@@ -125,7 +140,55 @@ def main():
                     df = pd.read_excel(io.BytesIO(st.session_state.arquivo_bytes), dtype=str)
                 
                 if df is not None:
+                    # 1. Padroniza tudo para letras minúsculas e remove espaços
                     df.columns = [str(col).strip().lower() for col in df.columns]
+                    
+                    # 2. Dicionário tradutor (De: Para)
+                    dicionario_colunas = {
+                        # --- Variações para NOME ---
+                        "nome completo": "nome",
+                        "cliente": "nome",
+                        "nome do cliente": "nome",
+                        "nome fantasia": "nome",
+                        "razao social": "nome",
+                        "razão social": "nome",
+                        "primeiro nome": "nome",
+                        "name": "nome",
+                        "first name": "nome",
+                        "nombre": "nome", # Para planilhas em espanhol
+                        
+                        # --- Variações para TELEFONE ---
+                        "contato": "telefone",
+                        "celular": "telefone",
+                        "cel": "telefone",
+                        "whatsapp": "telefone",
+                        "whats": "telefone",
+                        "zap": "telefone",
+                        "tel": "telefone",
+                        "fone": "telefone",
+                        "telefone 1": "telefone",
+                        "celular 1": "telefone",
+                        "telefone de contato": "telefone",
+                        "numero": "telefone",
+                        "número": "telefone",
+                        "phone": "telefone",
+                        "mobile": "telefone",
+                        
+                        # --- Variações para E-MAIL ---
+                        "e-mail": "email",
+                        "e mail": "email",
+                        "mail": "email",
+                        "endereço de email": "email",
+                        "endereço de e-mail": "email",
+                        "email address": "email",
+                        "correio eletronico": "email",
+                        "correio eletrônico": "email",
+                        "correo": "email"
+                    }
+                    
+                    # 3. Renomeia as colunas usando o dicionário
+                    df = df.rename(columns=dicionario_colunas)
+
                     # Salva a tabela pronta na memória para a tela de Gráficos usar
                     st.session_state.df_atual = df
 
@@ -133,11 +196,6 @@ def main():
                 st.error(f"❌ Erro ao ler a planilha. Detalhe: {e}")
 
             if df is not None:
-                st.markdown("### 👁️ Pré-visualização dos Dados")
-                st.dataframe(df, use_container_width=True, height=200)
-                st.caption(f"Total de registros encontrados: {len(df)}")
-
-                st.markdown("---")
                 st.markdown("### 📥 Escolha o formato de saída:")
                 
                 nome_base = st.session_state.nome_arquivo.rsplit('.', 1)[0]
@@ -163,7 +221,7 @@ def main():
                     st.error(f"❌ Erro ao processar os arquivos finais. Detalhe: {e}")
 
     # ==========================================
-    # PÁGINA 2: ANÁLISE DE DADOS (NOVA)
+    # PÁGINA 2: ANÁLISE DE DADOS
     # ==========================================
     elif menu == "📊 Análise de Dados":
         st.title("📊 Análise de Dados e Gráficos")
@@ -173,6 +231,12 @@ def main():
             st.warning("⚠️ Nenhuma planilha carregada! Por favor, vá em 'Conversor de Arquivos' e faça o upload primeiro.")
         else:
             df = st.session_state.df_atual.copy()
+            
+            # --- SEÇÃO 0: PRÉ-VISUALIZAÇÃO (MOVIDA PRA CÁ) ---
+            st.markdown("### 👁️ Pré-visualização dos Dados")
+            st.dataframe(df, use_container_width=True, height=200)
+            
+            st.markdown("---")
             
             # --- SEÇÃO 1: MÉTRICAS GERAIS ---
             st.markdown("### 🎯 Resumo da Base de Contatos")
@@ -230,18 +294,19 @@ def main():
     elif menu == "ℹ️ Sobre o Sistema":
         st.title("ℹ️ Sobre")
         st.markdown("""
-        Bem-vindo ao **Gestor de Contatos**!
+        Bem-vindo ao **Admin Data Tools Analytics**!
         
         Este sistema foi criado para facilitar a vida de quem precisa gerenciar grandes listas de contatos.
         
         **Como funciona:**
         1. Envie um arquivo `.csv`, `.xlsx` ou `.xls` com as colunas `nome`, `telefone` e `email`.
         2. O sistema lê os dados de forma segura na memória.
-        3. Acesse a aba **Análise de Dados** para extrair insights da sua lista.
-        4. Volte ao conversor e escolha o formato para baixar (VCF, XLSX, CSV ou TXT).
+        3. O conversor possibilita escolher o formato para baixar (VCF, XLSX, CSV ou TXT).
+        4. Acesse a aba **Análise de Dados** para extrair insights da sua lista.
+
         
         ---
-        **Desenvolvido por:** Alessandro Vasconcelos
+        **Desenvolvido por:** Alessandro
         """)
 
 if __name__ == "__main__":
