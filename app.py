@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components # <-- NOVO IMPORT
 import pandas as pd
 import csv
 import io
@@ -8,8 +9,28 @@ st.set_page_config(
     page_title="Gestor de Contatos", 
     page_icon="📇", 
     layout="centered",
-    #initial_sidebar_state="expanded" 
+    # initial_sidebar_state="expanded" 
 )
+
+# --- FUNÇÃO PARA FECHAR A SIDEBAR VIA JAVASCRIPT ---
+def fechar_sidebar():
+    components.html(
+        """
+        <script>
+            const buttons = window.parent.document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                // Procura o botão de recolher a sidebar pela tag do Streamlit
+                if (btn.getAttribute('data-testid') === 'baseButton-headerNoPadding' || 
+                    btn.getAttribute('data-testid') === 'stSidebarCollapseButton' ||
+                    btn.getAttribute('aria-label') === 'Collapse sidebar') {
+                    btn.click();
+                }
+            });
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
 # --- FUNÇÕES DE CONVERSÃO NA MEMÓRIA ---
 def gerar_vcf(df):
@@ -51,8 +72,8 @@ def injetar_css():
     st.markdown("""
         <style>
         [data-testid="stSidebar"] {
-            min-width: 184px !important;
-            max-width: 184px !important;
+            min-width: 240px !important;
+            max-width: 240px !important;
         }
 
         .footer {
@@ -60,15 +81,11 @@ def injetar_css():
             left: 0 !important; 
             bottom: 0 !important; 
             width: 100% !important;
-
-            /* COR CORRIGIDA */
             background-color: var(--secondary-background-color, #0e1117) !important;
-
             color: #aaaaaa !important; 
             text-align: center !important;
             padding: 10px !important; 
             font-size: 14px !important; 
-
             border-top: 1px solid rgba(255, 255, 255, 0.1) !important; 
             z-index: 999999 !important; 
             opacity: 1 !important;
@@ -92,15 +109,24 @@ def main():
         st.session_state.nome_arquivo = ""
     if "uploader_key" not in st.session_state:
         st.session_state.uploader_key = 0 
-    # Nova memória para guardar os dados e enviar para os gráficos
     if "df_atual" not in st.session_state:
         st.session_state.df_atual = None
+    
+    # Controle de estado para detectar mudança no menu
+    if "menu_anterior" not in st.session_state:
+        st.session_state.menu_anterior = "🔄 Conversor de Arquivos"
 
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=100)
     st.sidebar.markdown("## Navegação")
+    
     # Adicionamos a nova opção de Análise no Menu
     menu = st.sidebar.radio("Ir para:", ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"])
     
+    # Lógica que fecha a sidebar quando o menu muda
+    if menu != st.session_state.menu_anterior:
+        st.session_state.menu_anterior = menu
+        fechar_sidebar()
+        
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='text-align: justify;'>Ferramenta administrativa para converter e analisar dados de planilhas.</p>", unsafe_allow_html=True)
 
@@ -127,7 +153,7 @@ def main():
             if st.button("🗑️ Limpar Arquivo e Enviar Outro"):
                 st.session_state.arquivo_bytes = None
                 st.session_state.nome_arquivo = ""
-                st.session_state.df_atual = None # Limpa a tabela da memória também
+                st.session_state.df_atual = None
                 st.session_state.uploader_key += 1 
                 st.rerun() 
             st.markdown("---")
@@ -154,45 +180,20 @@ def main():
                     
                     # 2. Dicionário tradutor (De: Para)
                     dicionario_colunas = {
-                        # --- Variações para NOME ---
-                        "nome completo": "nome",
-                        "cliente": "nome",
-                        "nome do cliente": "nome",
-                        "nome fantasia": "nome",
-                        "razao social": "nome",
-                        "razão social": "nome",
-                        "primeiro nome": "nome",
-                        "name": "nome",
-                        "first name": "nome",
-                        "nombre": "nome", 
+                        "nome completo": "nome", "cliente": "nome", "nome do cliente": "nome",
+                        "nome fantasia": "nome", "razao social": "nome", "razão social": "nome",
+                        "primeiro nome": "nome", "name": "nome", "first name": "nome", "nombre": "nome", 
                         
-                        # --- Variações para TELEFONE ---
-                        "contato": "telefone",
-                        "celular": "telefone",
-                        "cel": "telefone",
-                        "whatsapp": "telefone",
-                        "whats": "telefone",
-                        "zap": "telefone",
-                        "tel": "telefone",
-                        "fone": "telefone",
-                        "telefone 1": "telefone",
-                        "celular 1": "telefone",
-                        "telefone de contato": "telefone",
-                        "numero": "telefone",
-                        "número": "telefone",
-                        "phone": "telefone",
-                        "mobile": "telefone",
+                        "contato": "telefone", "celular": "telefone", "cel": "telefone",
+                        "whatsapp": "telefone", "whats": "telefone", "zap": "telefone",
+                        "tel": "telefone", "fone": "telefone", "telefone 1": "telefone",
+                        "celular 1": "telefone", "telefone de contato": "telefone", "numero": "telefone",
+                        "número": "telefone", "phone": "telefone", "mobile": "telefone",
                         
-                        # --- Variações para E-MAIL ---
-                        "e-mail": "email",
-                        "e mail": "email",
-                        "mail": "email",
-                        "endereço de email": "email",
-                        "endereço de e-mail": "email",
-                        "email address": "email",
-                        "correio eletronico": "email",
-                        "correio eletrônico": "email",
-                        "correo": "email"
+                        "e-mail": "email", "e mail": "email", "mail": "email",
+                        "endereço de email": "email", "endereço de e-mail": "email",
+                        "email address": "email", "correio eletronico": "email",
+                        "correio eletrônico": "email", "correo": "email"
                     }
                     
                     # 3. Renomeia as colunas usando o dicionário
@@ -266,7 +267,6 @@ def main():
             # --- SEÇÃO 2: GRÁFICO DE PROVEDORES DE E-MAIL ---
             st.markdown("### 📧 Provedores de E-mail mais usados")
             if 'email' in df.columns and qtd_email > 0:
-                # Extrai apenas o domínio (o que vem depois do @)
                 dominios = df['email'].dropna().astype(str).apply(lambda x: x.split('@')[-1] if '@' in x else None)
                 top_dominios = dominios.value_counts().head(10) # Pega os 10 maiores
                 
@@ -280,11 +280,9 @@ def main():
             st.markdown("### 📈 Análise Dinâmica")
             st.write("Escolha qualquer coluna da sua planilha para visualizar a distribuição dos dados:")
             
-            # Deixa o usuário escolher a coluna
             coluna_escolhida = st.selectbox("Selecione a coluna:", df.columns)
             
             if coluna_escolhida:
-                # Remove valores vazios para não sujar o gráfico
                 dados_limpos = df[coluna_escolhida].replace("", pd.NA).dropna()
                 
                 if len(dados_limpos) == 0:
@@ -292,10 +290,8 @@ def main():
                 elif len(dados_limpos.unique()) > 50:
                     st.warning("Existem muitos valores diferentes nesta coluna (ex: nomes próprios). O gráfico ficaria ilegível.")
                 else:
-                    # Conta a frequência e mostra o gráfico
                     contagem = dados_limpos.value_counts().head(15) # Top 15
                     st.bar_chart(contagem)
-
 
     # ==========================================
     # PÁGINA 3: SOBRE
