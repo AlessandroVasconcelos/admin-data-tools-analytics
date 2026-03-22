@@ -1,7 +1,8 @@
 ## 📊 Admin Data Tools Analytics
 
-Ferramenta administrativa desenvolvida para facilitar a manipulação, conversão e análise de bases de contatos e planilhas de dados. Com uma interface intuitiva, o sistema permite que usuários processem arquivos CSV e Excel de forma automatizada, gerando arquivos prontos para importação em dispositivos móveis e dashboards estatísticos em tempo real.
-
+<p align="justify">
+Ferramenta administrativa desenvolvida para facilitar a manipulação, conversão e análise de planilhas. Com uma interface intuitiva, o sistema permite que usuários processem arquivos de forma automatizada, gerando arquivos prontos para importação em dispositivos móveis e dashboards estatísticos em tempo real.
+</p>
 🔗 Acesse a aplicação: https://app-data-tools-analytics.streamlit.app
 
 ---
