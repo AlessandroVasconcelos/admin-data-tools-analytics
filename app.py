@@ -51,8 +51,8 @@ def injetar_css():
     st.markdown("""
         <style>
         [data-testid="stSidebar"] {
-            min-width: 230px !important;
-            max-width: 230px !important;
+            min-width: 184px !important;
+            max-width: 184px !important;
         }
 
         .footer {
