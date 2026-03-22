@@ -34,7 +34,7 @@ Este projeto foi desenvolvido em **Python** utilizando a biblioteca **Streamlit*
 
 ### ⚙️ Passo a Passo
 
-1. Clone o repositório
+**1. Clone o repositório**
 ```bash
 git clone https://github.com/seu-usuario/admin-data-tools-analytics.git
 cd admin-data-tools-analytics
@@ -50,7 +50,7 @@ source venv/bin/activate
 
 ---
 
-3. Instale as dependências
+**3. Instale as dependências**
 
 ```bash
 pip install -r requirements.txt
@@ -58,7 +58,7 @@ pip install -r requirements.txt
 
 ---
 
-4. Execute a aplicação
+**4. Execute a aplicação**
 
 ```bash
 streamlit run app.py
