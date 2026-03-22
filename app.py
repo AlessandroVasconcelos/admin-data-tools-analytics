@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Gestor de Contatos", 
     page_icon="📇", 
     layout="centered",
-    initial_sidebar_state="expanded" 
+    #initial_sidebar_state="expanded" 
 )
 
 # --- FUNÇÕES DE CONVERSÃO NA MEMÓRIA ---
@@ -98,7 +98,7 @@ def main():
     # PÁGINA 1: CONVERSOR
     # ==========================================
     if menu == "🔄 Conversor de Arquivos":
-        st.markdown("## 📇 Admin Data Tools Analytics")
+        st.markdown("### 📇 Admin Data Tools Analytics")
         st.markdown("Faça o upload da sua planilha para gerar os arquivos compatíveis.")
         
         arquivo_carregado = st.file_uploader(
