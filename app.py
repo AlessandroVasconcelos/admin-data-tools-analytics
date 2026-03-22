@@ -46,28 +46,38 @@ def gerar_txt_emails(df):
     texto_final = "\n".join(lista_emails) if lista_emails else "Nenhum e-mail válido encontrado."
     return texto_final.encode('utf-8')
 
-# --- ESTILIZAÇÃO CSS (RODAPÉ) ---
+# --- ESTILIZAÇÃO CSS (RODAPÉ E MENU) ---
 def injetar_css():
     st.markdown("""
         <style>
-        .footer {
-            position: fixed; 
-            left: 0; 
-            bottom: 0; 
-            width: 100%;
-            background-color: transparent; /* Fundo branco para não ficar transparente */
-            color: #555555; 
-            text-align: center;
-            padding: 10px; 
-            font-size: 14px; 
-            border-top: 1px solid #eaeaea; 
-            z-index: 100;
+        [data-testid="stSidebar"] {
+            min-width: 230px !important;
+            max-width: 230px !important;
         }
-        /* Para o modo escuro do Streamlit, você pode trocar 'white' por '#0e1117' e a cor do texto para '#aaaaaa' */
+
+        .footer {
+            position: fixed !important; 
+            left: 0 !important; 
+            bottom: 0 !important; 
+            width: 100% !important;
+
+            /* COR CORRIGIDA */
+            background-color: var(--secondary-background-color, #0e1117) !important;
+
+            color: #aaaaaa !important; 
+            text-align: center !important;
+            padding: 10px !important; 
+            font-size: 14px !important; 
+
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important; 
+            z-index: 999999 !important; 
+            opacity: 1 !important;
+        }
         
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         </style>
+
         <div class="footer">Desenvolvido por <b>Alessandro</b> | 2026</div>
     """, unsafe_allow_html=True)
 
@@ -92,7 +102,7 @@ def main():
     menu = st.sidebar.radio("Ir para:", ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"])
     
     st.sidebar.markdown("---")
-    st.sidebar.markdown("Ferramenta administrativa para converter e analisar dados de planilhas.")
+    st.sidebar.markdown("<p style='text-align: justify;'>Ferramenta administrativa para converter e analisar dados de planilhas.</p>", unsafe_allow_html=True)
 
     # ==========================================
     # PÁGINA 1: CONVERSOR
@@ -154,7 +164,7 @@ def main():
                         "primeiro nome": "nome",
                         "name": "nome",
                         "first name": "nome",
-                        "nombre": "nome", # Para planilhas em espanhol
+                        "nombre": "nome", 
                         
                         # --- Variações para TELEFONE ---
                         "contato": "telefone",
@@ -223,7 +233,7 @@ def main():
     # PÁGINA 2: ANÁLISE DE DADOS
     # ==========================================
     elif menu == "📊 Análise de Dados":
-        st.markdown("## 📊 Análise de Dados e Gráficos")
+        st.markdown("### 📊 Análise de Dados e Gráficos")
         
         # Verifica se o usuário já carregou uma planilha na primeira aba
         if st.session_state.df_atual is None:
@@ -231,7 +241,7 @@ def main():
         else:
             df = st.session_state.df_atual.copy()
             
-            # --- SEÇÃO 0: PRÉ-VISUALIZAÇÃO (MOVIDA PRA CÁ) ---
+            # --- SEÇÃO 0: PRÉ-VISUALIZAÇÃO ---
             st.markdown("### 👁️ Pré-visualização dos Dados")
             st.dataframe(df, use_container_width=True, height=200)
             
@@ -291,7 +301,7 @@ def main():
     # PÁGINA 3: SOBRE
     # ==========================================
     elif menu == "ℹ️ Sobre o Sistema":
-        st.markdown("## ℹ️ Sobre")
+        st.markdown("### ℹ️ Sobre")
         st.markdown("""
         Bem-vindo ao **Admin Data Tools Analytics**!
         
@@ -302,7 +312,6 @@ def main():
         2. O sistema lê os dados de forma segura na memória.
         3. O conversor possibilita escolher o formato para baixar (VCF, XLSX, CSV ou TXT).
         4. Acesse a aba **Análise de Dados** para extrair insights da sua lista.
-
         
         ---
         """)
