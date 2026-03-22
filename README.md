@@ -1,8 +1,8 @@
 ## 📊 Admin Data Tools Analytics
 
-<p align="justify">
+<div align="justify">
 Ferramenta administrativa desenvolvida para facilitar a manipulação, conversão e análise de planilhas. Com uma interface intuitiva, o sistema permite que usuários processem arquivos de forma automatizada, gerando arquivos prontos para importação em dispositivos móveis e dashboards estatísticos em tempo real.
-</p>
+</div>
 🔗 Acesse a aplicação: https://app-data-tools-analytics.streamlit.app
 
 ---
