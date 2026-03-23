@@ -141,7 +141,7 @@ def main():
     col_img, col_txt = st.columns([0.7, 6], gap="small")
 
     with col_img:
-        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=60)
+        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=55)
 
     with col_txt:
         st.markdown("### Admin Data Tools Analytics")
