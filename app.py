@@ -139,7 +139,7 @@ def main():
 
     col_img, col_txt = st.columns([1, 6])
     with col_img:
-        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=65)
+        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=60)
     with col_txt:
         st.markdown("### Admin Data Tools Analytics")
         st.markdown("Ferramenta para converter e analisar dados de planilhas.")
