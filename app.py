@@ -150,7 +150,7 @@ def main():
     st.write("") 
     opcoes_menu = ["🔄 Conversor de Arquivos", "📊 Análise de Dados", "ℹ️ Sobre o Sistema"]
     menu = st.radio("Navegação:", opcoes_menu, horizontal=True, label_visibility="collapsed")
-    st.markdown("---")
+    st.markdown('<hr style="margin: 8px 0px;">', unsafe_allow_html=True)
 
     if menu == "🔄 Conversor de Arquivos":
         st.markdown("Faça o upload da sua planilha para gerar os arquivos compatíveis.")
