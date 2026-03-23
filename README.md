@@ -38,6 +38,7 @@ Este projeto foi desenvolvido em **Python** utilizando a biblioteca **Streamlit*
 ```bash
 git clone https://github.com/seu-usuario/admin-data-tools-analytics.git
 cd admin-data-tools-analytics
+python -m venv venv
 ```
 Windows:
 ```bash
