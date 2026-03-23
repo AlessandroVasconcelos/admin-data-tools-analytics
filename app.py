@@ -1,8 +1,10 @@
 import streamlit as st
+import streamlit.components.v1 as components # <-- Adicionado para o Scroll
 import pandas as pd
 import io
 import base64
 import csv
+import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -103,6 +105,7 @@ def main():
     if "nome_arquivo" not in st.session_state: st.session_state.nome_arquivo = ""
     if "uploader_key" not in st.session_state: st.session_state.uploader_key = 0 
     if "df_atual" not in st.session_state: st.session_state.df_atual = None
+    if "fazer_scroll" not in st.session_state: st.session_state.fazer_scroll = False # <-- Controle de Scroll
 
     col_img, col_txt = st.columns([1, 6])
     with col_img:
@@ -121,6 +124,10 @@ def main():
         arquivo_carregado = st.file_uploader("Arraste seu arquivo CSV ou Excel aqui:", type=["csv", "xlsx", "xls"], key=f"uploader_{st.session_state.uploader_key}")
 
         if arquivo_carregado is not None:
+            # Verifica se é um arquivo novo para ativar o scroll
+            if st.session_state.nome_arquivo != arquivo_carregado.name:
+                st.session_state.fazer_scroll = True
+                
             st.session_state.arquivo_bytes = arquivo_carregado.getvalue()
             st.session_state.nome_arquivo = arquivo_carregado.name
 
@@ -130,6 +137,7 @@ def main():
                 st.session_state.nome_arquivo = ""
                 st.session_state.df_atual = None
                 st.session_state.uploader_key += 1 
+                st.session_state.fazer_scroll = False
                 st.rerun() 
 
             extensao = st.session_state.nome_arquivo.split('.')[-1].lower()
@@ -137,15 +145,12 @@ def main():
 
             try:
                 if extensao == 'csv':
-                    # Decodifica o texto para ser analisado
                     try:
                         conteudo_texto = st.session_state.arquivo_bytes.decode("utf-8")
                     except UnicodeDecodeError:
                         conteudo_texto = st.session_state.arquivo_bytes.decode("latin-1")
                     
-                    # Usa o farejador automático (Sniffer) para descobrir o separador usando as primeiras 2048 letras
                     separador_adivinhado = csv.Sniffer().sniff(conteudo_texto[:2048]).delimiter
-                    
                     df = pd.read_csv(io.StringIO(conteudo_texto), sep=separador_adivinhado, dtype=str)
                 
                 elif extensao in ['xlsx', 'xls']:
@@ -200,6 +205,19 @@ def main():
                         
                 except Exception as e:
                     st.error(f"❌ Erro ao processar os arquivos finais. Detalhe: {e}")
+            
+            # --- SCRIPT DE SCROLL AUTOMÁTICO ---
+            if st.session_state.fazer_scroll:
+                js_scroll = f"""
+                <script>
+                // Timestamp: {time.time()}
+                setTimeout(function() {{
+                    window.parent.scrollTo({{top: window.parent.document.body.scrollHeight, behavior: 'smooth'}});
+                }}, 400); // 400ms dá o tempo certinho da tabela e dos botões renderizarem
+                </script>
+                """
+                components.html(js_scroll, height=0)
+                st.session_state.fazer_scroll = False # Desliga para não rolar de novo sem motivo
 
     elif menu == "📊 Análise de Dados":
         if st.session_state.df_atual is None:
