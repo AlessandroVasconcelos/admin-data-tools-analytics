@@ -1,10 +1,11 @@
 import streamlit as st
-import streamlit.components.v1 as components # <-- Adicionado para o Scroll
+import streamlit.components.v1 as components
 import pandas as pd
 import io
 import base64
 import csv
 import time
+import os
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -12,6 +13,35 @@ st.set_page_config(
     page_icon="📇", 
     layout="centered"
 )
+
+# --- NOVA FUNÇÃO PARA CARREGAR JS EXTERNO ---
+def carregar_js(file_name, nome_da_funcao):
+    if os.path.exists(file_name):
+        with open(file_name, encoding="utf-8") as f:
+            js_code = f.read()
+            
+            # Ele lê todo o script.js, mas só executa a função que você pediu!
+            js_completo = f"""
+            <script>
+            {js_code}
+            
+            // Dispara a função escolhida:
+            {nome_da_funcao}(); 
+            
+            // Timestamp para driblar o cache: {time.time()}
+            </script>
+            """
+            components.html(js_completo, height=0)
+    else:
+        st.error(f"Arquivo {file_name} não encontrado.")
+
+# --- FUNÇÃO DE SCROLL AUTOMÁTICO ENXUTA ---
+def rolar_para_botoes():
+    # 1. Cria o alvo invisível na tela
+    st.markdown("<div id='alvo-scroll'></div>", unsafe_allow_html=True)
+    
+    # 2. Chama a função JavaScript do arquivo externo
+    carregar_js("script.js", "fazerScroll")
 
 # --- BOTÃO DE DOWNLOAD CUSTOMIZADO HTML ---
 def botao_download_customizado(label, data, file_name, mime_type, cor_fundo, cor_texto="white"):
@@ -105,11 +135,11 @@ def main():
     if "nome_arquivo" not in st.session_state: st.session_state.nome_arquivo = ""
     if "uploader_key" not in st.session_state: st.session_state.uploader_key = 0 
     if "df_atual" not in st.session_state: st.session_state.df_atual = None
-    if "fazer_scroll" not in st.session_state: st.session_state.fazer_scroll = False # <-- Controle de Scroll
+    if "fazer_scroll" not in st.session_state: st.session_state.fazer_scroll = False
 
     col_img, col_txt = st.columns([1, 6])
     with col_img:
-        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=70)
+        st.image("https://cdn-icons-png.flaticon.com/512/8112/8112512.png", width=65)
     with col_txt:
         st.markdown("### Admin Data Tools Analytics")
         st.markdown("Ferramenta para converter e analisar dados de planilhas.")
@@ -124,7 +154,6 @@ def main():
         arquivo_carregado = st.file_uploader("Arraste seu arquivo CSV ou Excel aqui:", type=["csv", "xlsx", "xls"], key=f"uploader_{st.session_state.uploader_key}")
 
         if arquivo_carregado is not None:
-            # Verifica se é um arquivo novo para ativar o scroll
             if st.session_state.nome_arquivo != arquivo_carregado.name:
                 st.session_state.fazer_scroll = True
                 
@@ -205,19 +234,11 @@ def main():
                         
                 except Exception as e:
                     st.error(f"❌ Erro ao processar os arquivos finais. Detalhe: {e}")
-            
-            # --- SCRIPT DE SCROLL AUTOMÁTICO ---
+
+            # Aciona a função visual de descer a página se a flag estiver ativada
             if st.session_state.fazer_scroll:
-                js_scroll = f"""
-                <script>
-                // Timestamp: {time.time()}
-                setTimeout(function() {{
-                    window.parent.scrollTo({{top: window.parent.document.body.scrollHeight, behavior: 'smooth'}});
-                }}, 400); // 400ms dá o tempo certinho da tabela e dos botões renderizarem
-                </script>
-                """
-                components.html(js_scroll, height=0)
-                st.session_state.fazer_scroll = False # Desliga para não rolar de novo sem motivo
+                rolar_para_botoes()
+                st.session_state.fazer_scroll = False
 
     elif menu == "📊 Análise de Dados":
         if st.session_state.df_atual is None:
