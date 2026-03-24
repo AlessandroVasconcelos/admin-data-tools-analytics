@@ -64,10 +64,7 @@ pip install -r requirements.txt
 ```bash
 streamlit run app.py
 ```
-
----
-
-## 🌐 Acesso local
+🌐 Acesso local
 
 A aplicação será aberta automaticamente no navegador:
 
