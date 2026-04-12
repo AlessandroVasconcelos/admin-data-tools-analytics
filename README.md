@@ -35,7 +35,9 @@ Ferramenta administrativa desenvolvida para facilitar a manipulação, conversã
 - Formatação condicional
 - Gráfico de tendência
 
-## 🚀 Como Rodar o Projeto Localmente
+---
+
+### 🚀 Como Rodar o Projeto Localmente
 
 Este projeto foi desenvolvido em **Python** utilizando a biblioteca **Streamlit**.
 
@@ -56,7 +58,7 @@ Linux/Mac:
 source venv/bin/activate
 ```
 
----
+
 
 **3. Instale as dependências**
 
@@ -64,7 +66,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
+
 
 **4. Execute a aplicação**
 
